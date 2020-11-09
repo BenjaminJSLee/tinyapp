@@ -1,6 +1,25 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bodyParser = require("body-parser");
+
+function generateRandomString() {
+  const maxChar = 'z'.charCodeAt(0);
+  const minChar = '0'.charCodeAt(0);
+  const numIgnoredChar = ('A'.charCodeAt(0) + 1) - ('9'.charCodeAt(0) + 1) + ('a'.charCodeAt(0) + 1) - ('Z'.charCodeAt(0) + 1);
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    let randChar = Math.floor((Math.random() * (maxChar - minChar - numIgnoredChar))) + minChar;
+    if (randChar >= ('9'.charCodeAt(0) + 1)) randChar += ('A'.charCodeAt(0) + 1) - ('9'.charCodeAt(0) + 1);
+    if (randChar >= ('Z'.charCodeAt(0) + 1)) randChar += ('a'.charCodeAt(0) + 1) - ('Z'.charCodeAt(0) + 1);
+    randChar = String.fromCharCode(randChar);
+    result = `${result}${randChar}`;
+  }
+  return result;
+}
+console.log(generateRandomString());
+
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.set('view engine','ejs');
 
@@ -21,9 +40,18 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+app.post("/urls", (req, res) => {
+  console.log(req.body);  // Log the POST request body to the console
+  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+});
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
+});
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
 });
 
 app.get("/urls/:shortURL", (req, res) => {
