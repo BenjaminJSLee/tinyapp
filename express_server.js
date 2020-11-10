@@ -4,20 +4,18 @@ const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
-function generateRandomString() {
-  const maxChar = 'z'.charCodeAt(0);
-  const minChar = '0'.charCodeAt(0);
-  const numIgnoredChar = ('A'.charCodeAt(0) + 1) - ('9'.charCodeAt(0) + 1) + ('a'.charCodeAt(0) + 1) - ('Z'.charCodeAt(0) + 1);
+/** Function generateRandomString
+ * 
+ */
+const generateRandomString = function() {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let result = "";
   for (let i = 0; i < 6; i++) {
-    let randChar = Math.floor((Math.random() * (maxChar - minChar - numIgnoredChar))) + minChar;
-    if (randChar >= ('9'.charCodeAt(0) + 1)) randChar += ('A'.charCodeAt(0) + 1) - ('9'.charCodeAt(0) + 1);
-    if (randChar >= ('Z'.charCodeAt(0) + 1)) randChar += ('a'.charCodeAt(0) + 1) - ('Z'.charCodeAt(0) + 1);
-    randChar = String.fromCharCode(randChar);
+    let randChar = chars.charAt(Math.floor((Math.random() * chars.length)));
     result = `${result}${randChar}`;
   }
   return result;
-}
+};
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -44,7 +42,6 @@ app.get("/hello", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  // res.render("urls_show", {shortURL: shortURL, longURL: req.body.longURL}); 
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -54,7 +51,7 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username').redirect("/urls");;
+  res.clearCookie('username').redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
@@ -63,7 +60,8 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
