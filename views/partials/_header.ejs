@@ -8,14 +8,14 @@
       </div>
     </div>
     <div>
-      <% if (!username) { %>
+      <% if (!user) { %>
         <form class="form-inline" method="POST" action="/login">
           <input class="form-control" name="username" type="text" placeholder="Username" style="margin-right: 1em"/>
           <input class="btn btn-primary" type="submit" value="Login"/>
         </form>
         <% } else { %>
           <form class="form-inline right" method="POST" action="/logout">
-            <label class="nav-item" style="margin-right: 1em">Logged in as: <%= username %></label>
+            <label class="nav-item" style="margin-right: 1em">Logged in as: <%= user.email %></label>
             <input class="btn btn-secondary" type="submit" value="Logout"/>
           </form>
           <% } %>

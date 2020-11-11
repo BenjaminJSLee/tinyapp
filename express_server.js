@@ -17,6 +17,13 @@ const generateRandomString = function() {
   return result;
 };
 
+const hasEmail = (obj,email) => {
+  for (const key in obj) {
+    if (obj[key].email === email) return true;
+  }
+  return false;
+};
+
 // Using middleware
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -28,6 +35,11 @@ app.set('view engine','ejs');
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
+};
+
+// Object containing userID objects (filled with ids, emails, and passwords)
+const users = {
+
 };
 
 // GET /
@@ -54,8 +66,30 @@ app.post("/urls", (req, res) => {
 
 // GET /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
+  const templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
   res.render('urls_index', templateVars);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = { user: users[req.cookies["user_id"]] };
+  res.render('urls_register', templateVars);
+});
+
+app.post("/register", (req, res) => {
+  if (!req.body.email || !req.body.password) {
+    return res.status(400).send('error 400: bad input');
+  }
+  if (hasEmail(users,req.body.email)) {
+    return res.status(400).send('error : email is already registered');
+  }
+  const newUser = {
+    id: generateRandomString(),
+    email: req.body.email,
+    password: req.body.password,
+  };
+  users[newUser.id] = newUser;
+  console.log(users);
+  res.cookie('user_id',newUser.id).redirect('/urls');
 });
 
 // POST /login
@@ -66,18 +100,18 @@ app.post("/login", (req, res) => {
 
 // POST /logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('username').redirect("/urls");
+  res.clearCookie('user_id').redirect("/urls");
 });
 
 // GET /urls/new
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 // GET /urls/:shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
 });
 
