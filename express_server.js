@@ -33,13 +33,17 @@ app.set('view engine','ejs');
 
 // Object containing shortURL - longURL key - value pairs
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "Pk5tKY"},
+  "9sm5xK": { longURL: "http://www.google.com", userID: "Pk5tKY"},
 };
 
 // Object containing userID objects (filled with ids, emails, and passwords)
 const users = {
-
+  "Pk5tKY": {
+    id: "Pk5tKY",
+    email: "test@test.com",
+    password: "test",
+  },
 };
 
 // GET /
@@ -59,8 +63,11 @@ app.get("/hello", (req, res) => {
 
 // POST /urls
 app.post("/urls", (req, res) => {
+  if (!req.cookies["user_id"] && !users[req.cookies["user_id"]]) {
+    return res.status(401).send("Error 401: cannot create a shortURL while not logged in");
+  }
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"]};
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -114,20 +121,23 @@ app.post("/logout", (req, res) => {
 
 // GET /urls/new
 app.get("/urls/new", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.redirect('/login');
+  }
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
 // GET /urls/:shortURL
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
   res.render("urls_show", templateVars);
 });
 
 // POST /urls/:shortURL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL]["longURL"] = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -140,12 +150,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // GET /u/:shortURL
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  if (longURL === undefined) {
-    res.statusCode = 404;
-    res.end();
+  const urlData = urlDatabase[req.params.shortURL];
+  if (urlData === undefined) {
+    res.status(404).send("Error 404: shortURL not found");
   } else {
-    res.redirect(longURL);
+    res.redirect(urlData.longURL);
   }
 });
 
