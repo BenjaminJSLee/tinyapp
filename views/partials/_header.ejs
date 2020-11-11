@@ -8,11 +8,9 @@
       </div>
     </div>
     <div>
-      <% if (!user) { %>
-        <form class="form-inline" method="POST" action="/login">
-          <input class="form-control" name="username" type="text" placeholder="Username" style="margin-right: 1em"/>
-          <input class="btn btn-primary" type="submit" value="Login"/>
-        </form>
+      <% if (!locals["user"]) { %>
+        <a class="btn btn-primary" href="/login" >Login</a>
+        <a class="btn btn-primary" href="/register">Register</a>
         <% } else { %>
           <form class="form-inline right" method="POST" action="/logout">
             <label class="nav-item" style="margin-right: 1em">Logged in as: <%= user.email %></label>

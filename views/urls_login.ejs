@@ -9,13 +9,13 @@
 <body>
   <%- include('partials/_header') %>
   <main style="margin: 1em;">
-  <h1>Create an Account</h1>
-  <form class="" method="POST" action="/register">
+  <h1>Login</h1>
+  <form class="" method="POST" action="/login">
     <label for="email">EMAIL: </label>
-    <input class="form-control" type="email" name="email"/><br>
+    <input class="form-control" name="email" type="email" style="margin-right: 1em"/><br/>
     <label for="password">PASSWORD: </label>
-    <input class="form-control" type="password" name="password"/><br>
-    <input class="btn btn-primary" type="submit" value="Create"/>
+    <input class="form-control" name="password" type="password" /><br/>
+    <input class="btn btn-primary" type="submit" value="Login"/>
   </form>
   </main>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

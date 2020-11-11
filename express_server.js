@@ -17,11 +17,11 @@ const generateRandomString = function() {
   return result;
 };
 
-const hasEmail = (obj,email) => {
+const keyFromEmail = (obj,email) => {
   for (const key in obj) {
-    if (obj[key].email === email) return true;
+    if (obj[key].email === email) return key;
   }
-  return false;
+  return undefined;
 };
 
 // Using middleware
@@ -79,7 +79,7 @@ app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(400).send('error 400: bad input');
   }
-  if (hasEmail(users,req.body.email)) {
+  if (keyFromEmail(users,req.body.email)) {
     return res.status(400).send('error : email is already registered');
   }
   const newUser = {
@@ -88,14 +88,23 @@ app.post("/register", (req, res) => {
     password: req.body.password,
   };
   users[newUser.id] = newUser;
-  console.log(users);
   res.cookie('user_id',newUser.id).redirect('/urls');
+});
+
+app.get('/login', (req, res) => {
+  res.render('urls_login');
 });
 
 // POST /login
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username).redirect("/urls");
+  const userID = keyFromEmail(users,req.body.email);
+  if (userID === undefined) {
+    return res.status(403).send("Error 403: email and password mismatch");
+  }
+  if (users[userID].password !== req.body.password) {
+    return res.status(403).send("Error 403: email and password mismatch");
+  }
+  res.cookie('user_id', userID).redirect("/urls");
 });
 
 // POST /logout
