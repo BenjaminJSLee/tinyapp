@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 // HELPER FUNCTIONS
 
@@ -82,6 +83,7 @@ const urlDatabase = {
 };
 
 // Object containing userID objects (filled with ids, emails, and passwords)
+// Note that this user is inaccessible and is only here as an example
 const users = {
   "Pk5tKY": {
     id: "Pk5tKY",
@@ -146,7 +148,7 @@ app.post("/register", (req, res) => {
   const newUser = {
     id: generateRandomString(),
     email: req.body.email,
-    password: req.body.password,
+    password: bcrypt.hashSync(req.body.password,8),
   };
   users[newUser.id] = newUser;
   res.cookie('user_id',newUser.id).redirect('/urls');
@@ -166,7 +168,7 @@ app.post("/login", (req, res) => {
   if (userID === undefined) {
     return res.status(403).send("Error 403: email and password mismatch"); // purposefully vague error
   }
-  if (users[userID].password !== req.body.password) {
+  if (!bcrypt.compareSync(req.body.password, users[userID].password)) {
     return res.status(403).send("Error 403: email and password mismatch");
   }
   res.cookie('user_id', userID).redirect("/urls");
