@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
 // HELPER FUNCTIONS
@@ -58,7 +58,10 @@ const urlsForUser = (urls,id) => {
 // NET CODE
 
 // Using middleware
-app.use(cookieParser());
+app.use(cookieSession({
+  session: 'session',
+  keys: ["one","two"],
+}));
 app.use(bodyParser.urlencoded({extended: true}));
 
 // Setting ejs (Embedded JavaScript templating) as the template engine
@@ -96,7 +99,7 @@ const users = {
 
 // GET /
 app.get("/", (req, res) => {
-  if (!req.cookies["user_id"] && !users[req.cookies["user_id"]]) {
+  if (!req.session.userID && !users[req.session.userID]) {
     return res.redirect('/login');
   }
   res.redirect('/urls');
@@ -104,23 +107,23 @@ app.get("/", (req, res) => {
 
 // GET /urls
 app.get("/urls", (req, res) => {
-  if (!users[req.cookies["user_id"]]) {
+  if (!users[req.session.userID]) {
     return res.render('urls_index');
   }
-  const userURLs = urlsForUser(urlDatabase,users[req.cookies["user_id"]].id);
-  const templateVars = { user: users[req.cookies["user_id"]], urls: userURLs };
+  const userURLs = urlsForUser(urlDatabase,users[req.session.userID].id);
+  const templateVars = { user: users[req.session.userID], urls: userURLs };
   res.render('urls_index', templateVars);
 });
 
 // POST /urls
 app.post("/urls", (req, res) => {
-  if (!req.cookies["user_id"] && !users[req.cookies["user_id"]]) {
+  if (!req.session.userID || !users[req.session.userID]) {
     return res.status(401).send("Error 401: cannot create a shortURL while not logged in");
   }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: req.cookies["user_id"],
+    userID: req.session.userID,
     dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
@@ -130,10 +133,10 @@ app.post("/urls", (req, res) => {
 
 // GET /register
 app.get("/register", (req, res) => {
-  if (req.cookies["user_id"] && users[req.cookies["user_id"]]) {
+  if (req.session.userID && users[req.session.userID]) {
     return res.redirect('/urls');
   }
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session.userID] };
   res.render('urls_register', templateVars);
 });
 
@@ -151,12 +154,13 @@ app.post("/register", (req, res) => {
     password: bcrypt.hashSync(req.body.password,8),
   };
   users[newUser.id] = newUser;
-  res.cookie('user_id',newUser.id).redirect('/urls');
+  req.session.userID = newUser.id;
+  res.redirect('/urls');
 });
 
 // GET /login
 app.get('/login', (req, res) => {
-  if (req.cookies["user_id"] && users[req.cookies["user_id"]]) {
+  if (req.session.userID && users[req.session.userID]) {
     return res.redirect('/urls');
   }
   res.render('urls_login');
@@ -171,20 +175,22 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(req.body.password, users[userID].password)) {
     return res.status(403).send("Error 403: email and password mismatch");
   }
-  res.cookie('user_id', userID).redirect("/urls");
+  req.session.userID = userID;
+  res.redirect("/urls");
 });
 
 // POST /logout
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id').redirect("/urls");
+  req.session.userID = null;
+  res.redirect("/urls");
 });
 
 // GET /urls/new
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.userID) {
     return res.redirect('/login');
   }
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.session.userID] };
   res.render("urls_new", templateVars);
 });
 
@@ -193,12 +199,12 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
     return res.status(404).send("Error 404: short URL not found");
   }
-  if (!users[req.cookies["user_id"]] ||
-      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+  if (!users[req.session.userID] ||
+      users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to short URL page");
   }
   const templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.userID],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     date: urlDatabase[req.params.shortURL].dateCreated,
@@ -210,8 +216,8 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // POST /urls/:shortURL
 app.post("/urls/:shortURL", (req, res) => {
-  if (!users[req.cookies["user_id"]] ||
-      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+  if (!users[req.session.userID] ||
+      users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to edit short URL page");
   }
   const shortURL = req.params.shortURL;
@@ -221,8 +227,8 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // POST /urls/:shortURL/delete
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (!users[req.cookies["user_id"]] ||
-      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+  if (!users[req.session.userID] ||
+      users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to delete short URL page");
   }
   const shortURL = req.params.shortURL;
@@ -237,9 +243,9 @@ app.get("/u/:shortURL", (req, res) => {
     res.status(404).send("Error 404: shortURL not found");
   } else {
     urlData.numVisits += 1;
-    if (!req.cookies[req.params.shortURL]) {
+    if (!req.session[req.params.shortURL]) {
       urlData.uniqVisits += 1;
-      res.cookie(req.params.shortURL,'true');
+      req.session[req.params.shortURL] = "1";
     }
     res.redirect(urlData.longURL);
   }
