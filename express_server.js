@@ -40,7 +40,7 @@ const urlsForUser = (urls,id) => {
   const result = {};
   for (const shortURL in urls) {
     if (urls[shortURL].userID === id) {
-      result[shortURL] = urls[shortURL].longURL;
+      result[shortURL] = urls[shortURL];
     }
   }
   return result;
@@ -58,13 +58,13 @@ const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     userID: "Pk5tKY",
-    dateCreated: new Date(),
+    dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
   },
   "9sm5xK": { longURL: "http://www.google.com",
     userID: "Pk5tKY",
-    dateCreated: new Date(),
+    dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
   },
@@ -93,7 +93,13 @@ app.post("/urls", (req, res) => {
     return res.status(401).send("Error 401: cannot create a shortURL while not logged in");
   }
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies["user_id"]};
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: req.cookies["user_id"],
+    dateCreated: new Date().toUTCString(),
+    numVisits: 0,
+    uniqVisits: 0,
+  };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -175,7 +181,14 @@ app.get("/urls/:shortURL", (req, res) => {
       users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to short URL page");
   }
-  const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
+  const templateVars = {
+    user: users[req.cookies["user_id"]],
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    date: urlDatabase[req.params.shortURL].dateCreated,
+    numVisits: urlDatabase[req.params.shortURL].numVisits,
+    uniqVisits: urlDatabase[req.params.shortURL].uniqVisits,
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -207,6 +220,11 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlData === undefined) {
     res.status(404).send("Error 404: shortURL not found");
   } else {
+    urlData.numVisits += 1;
+    if (!req.cookies[req.params.shortURL]) {
+      urlData.uniqVisits += 1;
+      res.cookie(req.params.shortURL,'true');
+    }
     res.redirect(urlData.longURL);
   }
 });
