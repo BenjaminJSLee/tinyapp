@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 /** Function generateRandomString generates a random 6 character alpha-numeric string and returns it
- *  @returns result: a 6 character alpha-numberic string
+ *  @returns string: a 6 character alpha-numberic string
  */
 const generateRandomString = function() {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -17,11 +17,33 @@ const generateRandomString = function() {
   return result;
 };
 
+/** Function keyFromEmail
+ *
+ * @param {*} obj
+ * @param {*} email
+ * @returns string:
+ */
 const keyFromEmail = (obj,email) => {
   for (const key in obj) {
     if (obj[key].email === email) return key;
   }
   return undefined;
+};
+
+/** Function urlsForUser
+ *
+ * @param {*} urls
+ * @param {*} id
+ * @returns object:
+ */
+const urlsForUser = (urls,id) => {
+  const result = {};
+  for (const shortURL in urls) {
+    if (urls[shortURL].userID === id) {
+      result[shortURL] = urls[shortURL].longURL;
+    }
+  }
+  return result;
 };
 
 // Using middleware
@@ -31,7 +53,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 // Setting ejs (Embedded JavaScript templating) as the template engine
 app.set('view engine','ejs');
 
-// Object containing shortURL - longURL key - value pairs
+// Object containing shortURL objects (filled with corresponding longURLs and userIDs)
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "Pk5tKY"},
   "9sm5xK": { longURL: "http://www.google.com", userID: "Pk5tKY"},
@@ -48,7 +70,10 @@ const users = {
 
 // GET /
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (!req.cookies["user_id"] && !users[req.cookies["user_id"]]) {
+    return res.redirect('/login');
+  }
+  res.redirect('/urls');
 });
 
 // GET /urls.json
@@ -73,15 +98,21 @@ app.post("/urls", (req, res) => {
 
 // GET /urls
 app.get("/urls", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]], urls: urlDatabase };
+  if (!users[req.cookies["user_id"]]) {
+    return res.render('urls_index');
+  }
+  const userURLs = urlsForUser(urlDatabase,users[req.cookies["user_id"]].id);
+  const templateVars = { user: users[req.cookies["user_id"]], urls: userURLs };
   res.render('urls_index', templateVars);
 });
 
+// GET /register
 app.get("/register", (req, res) => {
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_register', templateVars);
 });
 
+// POST /register
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(400).send('error 400: bad input');
@@ -130,12 +161,23 @@ app.get("/urls/new", (req, res) => {
 
 // GET /urls/:shortURL
 app.get("/urls/:shortURL", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(404).send("Error 404: short URL not found");
+  }
+  if (!users[req.cookies["user_id"]] ||
+      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("Error 401: unauthorized access to short URL page");
+  }
   const templateVars = { user: users[req.cookies["user_id"]], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
   res.render("urls_show", templateVars);
 });
 
 // POST /urls/:shortURL
 app.post("/urls/:shortURL", (req, res) => {
+  if (!users[req.cookies["user_id"]] ||
+      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("Error 401: unauthorized access to edit short URL page");
+  }
   const shortURL = req.params.shortURL;
   urlDatabase[shortURL]["longURL"] = req.body.longURL;
   res.redirect("/urls");
@@ -143,6 +185,10 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // POST /urls/:shortURL/delete
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!users[req.cookies["user_id"]] ||
+      users[req.cookies["user_id"]].id !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(401).send("Error 401: unauthorized access to delete short URL page");
+  }
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
