@@ -55,8 +55,19 @@ app.set('view engine','ejs');
 
 // Object containing shortURL objects (filled with corresponding longURLs and userIDs)
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "Pk5tKY"},
-  "9sm5xK": { longURL: "http://www.google.com", userID: "Pk5tKY"},
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "Pk5tKY",
+    dateCreated: new Date(),
+    numVisits: 0,
+    uniqVisits: 0,
+  },
+  "9sm5xK": { longURL: "http://www.google.com",
+    userID: "Pk5tKY",
+    dateCreated: new Date(),
+    numVisits: 0,
+    uniqVisits: 0,
+  },
 };
 
 // Object containing userID objects (filled with ids, emails, and passwords)
@@ -74,16 +85,6 @@ app.get("/", (req, res) => {
     return res.redirect('/login');
   }
   res.redirect('/urls');
-});
-
-// GET /urls.json
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-// GET /hello
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 // POST /urls
@@ -108,6 +109,9 @@ app.get("/urls", (req, res) => {
 
 // GET /register
 app.get("/register", (req, res) => {
+  if (req.cookies["user_id"] && users[req.cookies["user_id"]]) {
+    return res.redirect('/urls');
+  }
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render('urls_register', templateVars);
 });
@@ -115,7 +119,7 @@ app.get("/register", (req, res) => {
 // POST /register
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return res.status(400).send('error 400: bad input');
+    return res.status(400).send('error 400: bad input: email and password must have values');
   }
   if (keyFromEmail(users,req.body.email)) {
     return res.status(400).send('error : email is already registered');
@@ -130,6 +134,9 @@ app.post("/register", (req, res) => {
 });
 
 app.get('/login', (req, res) => {
+  if (req.cookies["user_id"] && users[req.cookies["user_id"]]) {
+    return res.redirect('/urls');
+  }
   res.render('urls_login');
 });
 
@@ -137,7 +144,7 @@ app.get('/login', (req, res) => {
 app.post("/login", (req, res) => {
   const userID = keyFromEmail(users,req.body.email);
   if (userID === undefined) {
-    return res.status(403).send("Error 403: email and password mismatch");
+    return res.status(403).send("Error 403: email and password mismatch"); // purposefully vague
   }
   if (users[userID].password !== req.body.password) {
     return res.status(403).send("Error 403: email and password mismatch");
