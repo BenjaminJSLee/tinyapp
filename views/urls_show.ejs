@@ -18,13 +18,37 @@
         <p>Unique visits: <%= uniqVisits %></p>
       </div>
       <div class="card-footer text-muted"><h4>EDIT</h4></div>
-        <div class="card-header">
-          <form method="POST" action="/urls/<%= shortURL %>?_method=PUT">
-            <label>New URL: </label>
-            <input name="longURL" type="text" placeholder="<%= longURL %>" style="width: 300px; margin-right: 1em"/>
-            <button type="submit" class="btn btn-primary">Submit</button>
-          </form>
-        </div>
+      <div class="card-header">
+        <form method="POST" action="/urls/<%= shortURL %>?_method=PUT">
+          <label>New URL: </label>
+          <input name="longURL" type="text" placeholder="<%= longURL %>" style="width: 300px; margin-right: 1em"/>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+      <div class="card-body">
+        <h4>Visit History</h4>
+        <% if (visits.length > 0) { %>
+          <div class="d-flex align-items-center justify-content-center">
+          <table class="table table-hover border" style="width: 50%; margin: 1em;">
+          <thead class="thead-dark">
+            <th scope="col">Visitor ID</th>
+            <th scope="col">Date</th>
+          </thead>
+          <tbody>
+          <% for (const info of visits) { %>
+            <tr>
+              <td>"<%= info.visitorID %>"</td> 
+              <td><%= info.date %></td>
+            </tr>
+          <% } %>
+          </tbody>
+          </table>
+          </div>
+        <% } else { %>
+          <p>No visits so far</p>
+        <% } %>
+      </div>
+      <div class="card-footer"></div>
   </div>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

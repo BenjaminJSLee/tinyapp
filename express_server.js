@@ -33,6 +33,7 @@ const urlDatabase = {
     dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
+    visits: [],
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
@@ -89,6 +90,7 @@ app.post("/urls", (req, res) => {
     dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
+    visits: [],
   };
   res.redirect(`/urls/${shortURL}`);
 });
@@ -186,6 +188,7 @@ app.get("/urls/:shortURL", (req, res) => {
     date: urlDatabase[req.params.shortURL].dateCreated,
     numVisits: urlDatabase[req.params.shortURL].numVisits,
     uniqVisits: urlDatabase[req.params.shortURL].uniqVisits,
+    visits: urlDatabase[req.params.shortURL].visits,
   };
   res.render("urls_show", templateVars);
 });
@@ -227,8 +230,9 @@ app.get("/u/:shortURL", (req, res) => {
     urlData.numVisits += 1;
     if (!req.session[req.params.shortURL]) {
       urlData.uniqVisits += 1;
-      req.session[req.params.shortURL] = "1";
+      req.session[req.params.shortURL] = generateRandomString();
     }
+    urlData.visits.push({visitorID: req.session[req.params.shortURL], date: new Date().toUTCString()});
     res.redirect(urlData.longURL);
   }
 });
