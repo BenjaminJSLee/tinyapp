@@ -5,25 +5,10 @@ const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
-const PORT = 8080; // default port 8080
-
 // Helper functions
 const { keyByEmail, generateRandomString, urlsForUser } = require('./helpers.js');
 
-// Allows POST methods to be converted to other methods
-app.use(methodOverride('_method'));
-
-// Middleware used to encrypt, decrypt, and store cookies
-app.use(cookieSession({
-  session: 'session',
-  keys: ["one","two"],
-}));
-
-// Middleware  used to parse encoded data sent by forms
-app.use(bodyParser.urlencoded({extended: true}));
-
-// Setting ejs (Embedded JavaScript templating) as the template engine
-app.set('view engine','ejs');
+const PORT = 8080; // default port 8080
 
 // Object containing shortURL objects (filled with corresponding longURLs, userIDs, and meta data about the short link)
 const urlDatabase = {
@@ -41,6 +26,7 @@ const urlDatabase = {
     dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
+    visits: [],
   },
 };
 
@@ -53,6 +39,27 @@ const users = {
     password: "test",
   },
 };
+
+// Allows POST methods to be converted to other methods
+app.use(methodOverride('_method'));
+
+// Middleware used to encrypt, decrypt, and store cookies
+app.use(cookieSession({
+  session: 'session',
+  keys: ["one","two"],
+}));
+
+// Middleware  used to parse encoded data sent by forms
+app.use(bodyParser.urlencoded({extended: true}));
+
+// Custom middleware used to set user info depending on if the user is logged in or not
+app.use((req, res, next) => {
+  req.templateVars = req.session.userID ? { user: users[req.session.userID] } : { user: null };
+  next();
+});
+
+// Setting ejs (Embedded JavaScript templating) as the template engine
+app.set('view engine','ejs');
 
 // Routes
 
