@@ -41,6 +41,7 @@ const urlDatabase = {
     dateCreated: new Date().toUTCString(),
     numVisits: 0,
     uniqVisits: 0,
+    visits: [],
   },
 };
 
