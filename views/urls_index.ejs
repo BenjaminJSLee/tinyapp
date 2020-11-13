@@ -35,7 +35,7 @@
             <td class="align-middle"><%= urls[url].numVisits %></td>
             <td class="align-middle"><%= urls[url].uniqVisits %></td>
             <td class="align-middle"><form method="GET" action="/urls/<%= url %>"><input class="btn btn-warning" type="submit" value="edit"/></form></td>
-            <td class="align-middle"><form method="POST" action="/urls/<%= url %>/delete"><input class="btn btn-danger" type="submit" value="delete"/></form></td>
+            <td class="align-middle"><form method="POST" action="/urls/<%= url %>?_method=DELETE"><input class="btn btn-danger" type="submit" value="delete"/></form></td>
           </tr>
         <% } %>
     </tbody>

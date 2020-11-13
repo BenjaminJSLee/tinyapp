@@ -12,7 +12,7 @@
         <a class="btn btn-primary" href="/login" >Login</a>
         <a class="btn btn-primary" href="/register">Register</a>
         <% } else { %>
-          <form class="form-inline" method="POST" action="/logout">
+          <form class="form-inline" method="POST" action="/logout?_method=DELETE">
             <label class="nav-item" style="margin-right: 1em">Logged in as: <%= user.email %></label>
             <input class="btn btn-secondary" type="submit" value="Logout"/>
           </form>

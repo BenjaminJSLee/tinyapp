@@ -1,14 +1,17 @@
 const express = require('express');
 const app = express();
-
-const PORT = 8080; // default port 8080
-
+const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
+const PORT = 8080; // default port 8080
+
 // Helper functions
 const { keyByEmail, generateRandomString, urlsForUser } = require('./helpers.js');
+
+// Allows POST methods to be converted to other methods
+app.use(methodOverride('_method'));
 
 // Middleware used to encrypt, decrypt, and store cookies
 app.use(cookieSession({
@@ -130,7 +133,7 @@ app.get('/login', (req, res) => {
   res.render('urls_login');
 });
 
-// POST /login
+// POST /login (creating a cookie)
 // Logs a user into an account (using a session). A logged in user cannot log into another
 // account. An error will be sent if the userID does not exist or the input does not match
 // any accounts in the user database
@@ -146,10 +149,10 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
-// POST /logout
+// DELETE /logout (deletes cookie)
 // Logs the user out of their current session. Can be accessed by anyone, but will not
 // do anything if the user is not logged in
-app.post("/logout", (req, res) => {
+app.delete("/logout", (req, res) => {
   req.session.userID = null;
   res.redirect("/urls");
 });
@@ -187,10 +190,10 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// POST /urls/:shortURL
+// PUT /urls/:shortURL
 // Edits a short url with a new long url. Can only be done by the owner of the
 // short url
-app.post("/urls/:shortURL", (req, res) => {
+app.put("/urls/:shortURL", (req, res) => {
   if (!users[req.session.userID] ||
       users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to edit short URL page");
@@ -200,10 +203,10 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
-// POST /urls/:shortURL/delete
+// DELETE /urls/:shortURL
 // Deletes the short url from the database. Can only be done by the owner of the
 // short url
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   if (!users[req.session.userID] ||
       users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to delete short URL page");
