@@ -4,12 +4,12 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["TinyApp homepage when you are not logged in"](#)
-!["TinyApp login page"](#)
-!["TinyApp registration page"](#)
-!["TinyApp homepage when you are logged in"](#)
-!["TinyApp short url creation page"](#)
-!["TinyApp short url edit page"](#)
+!["TinyApp homepage when you are not logged in"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-no-log-in.png)
+!["TinyApp login page"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-login.png)
+!["TinyApp registration page"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-register.png)
+!["TinyApp homepage when you are logged in"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-index.png)
+!["TinyApp short url creation page"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-new.png)
+!["TinyApp short url edit page"](https://github.com/BenjaminJSLee/tinyapp/blob/master/docs/urls-edit.png)
 
 ## Dependencies
 ```

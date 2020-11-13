@@ -147,12 +147,16 @@ app.post("/login", (req, res) => {
 });
 
 // POST /logout
+// Logs the user out of their current session. Can be accessed by anyone, but will not
+// do anything if the user is not logged in
 app.post("/logout", (req, res) => {
   req.session.userID = null;
   res.redirect("/urls");
 });
 
 // GET /urls/new
+// Page for creating new short urls. Only accessible by logged in users, other users
+// will be redirected
 app.get("/urls/new", (req, res) => {
   if (!req.session.userID) {
     return res.redirect('/login');
@@ -162,6 +166,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 // GET /urls/:shortURL
+// Page for viewing and editing a specific short url. Only accessible by the creator
+// of the short url
 app.get("/urls/:shortURL", (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
     return res.status(404).send("Error 404: short URL not found");
@@ -182,6 +188,8 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 // POST /urls/:shortURL
+// Edits a short url with a new long url. Can only be done by the owner of the
+// short url
 app.post("/urls/:shortURL", (req, res) => {
   if (!users[req.session.userID] ||
       users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
@@ -193,6 +201,8 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 // POST /urls/:shortURL/delete
+// Deletes the short url from the database. Can only be done by the owner of the
+// short url
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (!users[req.session.userID] ||
       users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
@@ -204,6 +214,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 // GET /u/:shortURL
+// Redirects the user to the long url represented by the short url. If the short url doesn't
+// exist, the user is redirected to an error page instead
 app.get("/u/:shortURL", (req, res) => {
   const urlData = urlDatabase[req.params.shortURL];
   if (urlData === undefined) {
