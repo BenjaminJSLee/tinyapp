@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100%">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
   <title>TinyApp</title>
 </head>
-<body style="margin: 1em">
+<body style="height: 100%">
   <%- include('partials/_header') %>
+  <main style="height: 80%; margin-left: 1em; margin-right: 1em;">
   <% if (!locals["user"]) { %>
-    <h1>Please log in to see your short URLs</h1>
+    <div class="d-flex align-items-center justify-content-center h-100">
+      <h2>Please <a href="/login">log in</a> or <a href="/register">register an account</a> to see your short URLs</h2>
+    </div>
   <% } else { %>
-  <table class="table">
-    <thead>
+  <table class="table table-hover">
+    <thead class="thead-dark">
       <tr>
         <th scope="col">Short URL</th>
         <th scope="col">Long URL</th>
@@ -26,18 +29,19 @@
     <tbody>
         <% for (let url in urls) {%>
           <tr>
-            <td><%= url %></td>
-            <td><%= urls[url].longURL %></td>
-            <td><%= urls[url].dateCreated %></td>
-            <td><%= urls[url].numVisits %></td>
-            <td><%= urls[url].uniqVisits %></td>
-            <td><form method="GET" action="/urls/<%= url %>"><input type="submit" value="edit"/></form></td>
-            <td><form method="POST" action="/urls/<%= url %>/delete"><input type="submit" value="delete"/></form></td>
+            <td class="align-middle"><%= url %></td>
+            <td class="align-middle"><%= urls[url].longURL %></td>
+            <td class="align-middle"><%= urls[url].dateCreated %></td>
+            <td class="align-middle"><%= urls[url].numVisits %></td>
+            <td class="align-middle"><%= urls[url].uniqVisits %></td>
+            <td class="align-middle"><form method="GET" action="/urls/<%= url %>"><input class="btn btn-warning" type="submit" value="edit"/></form></td>
+            <td class="align-middle"><form method="POST" action="/urls/<%= url %>/delete"><input class="btn btn-danger" type="submit" value="delete"/></form></td>
           </tr>
         <% } %>
     </tbody>
   </table>
   <% } %>
+  </main>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>

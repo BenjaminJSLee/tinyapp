@@ -53,6 +53,7 @@ const users = {
 // Routes
 
 // GET /
+// If logged in, redirects to /urls. Otherwise redirects to /login
 app.get("/", (req, res) => {
   if (!req.session.userID && !users[req.session.userID]) {
     return res.redirect('/login');
@@ -61,6 +62,8 @@ app.get("/", (req, res) => {
 });
 
 // GET /urls
+// The page to obtain the info about the short urls created. If the user is not logged in, a message
+// will be displayed prompting the user to either log in or register an account
 app.get("/urls", (req, res) => {
   if (!users[req.session.userID]) {
     return res.render('urls_index');
@@ -71,6 +74,7 @@ app.get("/urls", (req, res) => {
 });
 
 // POST /urls
+// Creates a new short URL. A user can only create a short URL if they are logged in.
 app.post("/urls", (req, res) => {
   if (!req.session.userID || !users[req.session.userID]) {
     return res.status(401).send("Error 401: cannot create a shortURL while not logged in");
@@ -87,6 +91,8 @@ app.post("/urls", (req, res) => {
 });
 
 // GET /register
+// The page to register a new user account in the users database. Can only be accessed if
+// the user is not logged in already.
 app.get("/register", (req, res) => {
   if (req.session.userID && users[req.session.userID]) {
     return res.redirect('/urls');
@@ -96,6 +102,8 @@ app.get("/register", (req, res) => {
 });
 
 // POST /register
+// Creates a new account. An error will be sent if the input is unacceptable or if the email
+// already exists.
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(400).send('error 400: bad input: email and password must have values');
@@ -114,6 +122,7 @@ app.post("/register", (req, res) => {
 });
 
 // GET /login
+// The page to login to an existing account. A logged in user cannot access this page.
 app.get('/login', (req, res) => {
   if (req.session.userID && users[req.session.userID]) {
     return res.redirect('/urls');
@@ -122,6 +131,9 @@ app.get('/login', (req, res) => {
 });
 
 // POST /login
+// Logs a user into an account (using a session). A logged in user cannot log into another
+// account. An error will be sent if the userID does not exist or the input does not match
+// any accounts in the user database
 app.post("/login", (req, res) => {
   const userID = keyByEmail(users,req.body.email);
   if (userID === undefined) {

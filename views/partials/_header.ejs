@@ -1,5 +1,5 @@
 <header>
-  <nav class="navbar navbar-expand-md navbar-dark bg-success">
+  <nav class="navbar navbar-expand-md navbar-dark bg-info">
     <a class="navbar-brand" href="/urls">TinyApp</a>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
@@ -12,7 +12,7 @@
         <a class="btn btn-primary" href="/login" >Login</a>
         <a class="btn btn-primary" href="/register">Register</a>
         <% } else { %>
-          <form class="form-inline right" method="POST" action="/logout">
+          <form class="form-inline" method="POST" action="/logout">
             <label class="nav-item" style="margin-right: 1em">Logged in as: <%= user.email %></label>
             <input class="btn btn-secondary" type="submit" value="Logout"/>
           </form>
