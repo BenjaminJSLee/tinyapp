@@ -61,8 +61,12 @@ app.use((req, res, next) => {
 // Setting ejs (Embedded JavaScript templating) as the template engine
 app.set('view engine','ejs');
 
-//
+// Helper function used to render an error page with a status and a msg
+const errorPage = (req, res, status, msg) => {
+  return res.status(status).render('urls_error',{ ...req.templateVars, status, msg});
+};
 
+// Middleware callback used for users accessing specific short URL pages
 const URLFromShortURL = (req, res, next) => {
   req.templateVars = {
     ...req.templateVars,
@@ -70,7 +74,7 @@ const URLFromShortURL = (req, res, next) => {
     ...urlDatabase[req.params.shortURL],
   };
   if (!req.templateVars.user || req.templateVars.user.id !== req.templateVars.userID) {
-    return res.status(401).render('urls_error',{ status: 401, msg: "Unauthorized access to short URL page"});
+    return errorPage(req, res, 401, "Unauthorized access to short URL page");
   }
   next();
 };
@@ -83,7 +87,7 @@ app.get("/", (req, res) => {
   if (!req.templateVars.user) {
     return res.redirect('/login');
   }
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // GET /urls
@@ -91,17 +95,17 @@ app.get("/", (req, res) => {
 // will be displayed prompting the user to either log in or register an account
 app.get("/urls", (req, res) => {
   if (!req.templateVars.user) {
-    return res.status(401).render('urls_error',{ status: 401, msg: "Unauthorized access to URLs page"});
+    return errorPage(req, res, 401, "Please log in or register an account to see your short URLs");
   }
   req.templateVars.urls = urlsForUser(urlDatabase,req.templateVars.user ? req.templateVars.user.id : null);
-  res.render('urls_index', req.templateVars);
+  return res.render('urls_index', req.templateVars);
 });
 
 // POST /urls
 // Creates a new short URL. A user can only create a short URL if they are logged in.
 app.post("/urls", (req, res) => {
   if (!req.templateVars.user) {
-    return res.status(401).render('urls_error',{ status: 401, msg: "Cannot create a shortURL while not logged in" });
+    return errorPage(req, res, 401, "Cannot create a shortURL while not logged in");
   }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -112,7 +116,7 @@ app.post("/urls", (req, res) => {
     uniqVisits: 0,
     visits: [],
   };
-  res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 // GET /register
@@ -122,7 +126,7 @@ app.get("/register", (req, res) => {
   if (req.templateVars.user) {
     return res.redirect('/urls');
   }
-  res.render('urls_register');
+  return res.render('urls_register');
 });
 
 // POST /register
@@ -130,10 +134,10 @@ app.get("/register", (req, res) => {
 // already exists.
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return res.status(400).render('urls_error', { status: 400, msg: 'Bad input: Email and password must have values' });
+    return errorPage(req, res, 400, 'Bad input: Email and password must have values');
   }
   if (keyByEmail(users,req.body.email)) { // assumed that no keys can be falsey in this case
-    return res.status(400).render('urls_error', { status: 400, msg: 'Email is already registered' });
+    return errorPage(req, res, 400, 'Email is already registered');
   }
   const newUser = {
     id: generateRandomString(),
@@ -142,7 +146,7 @@ app.post("/register", (req, res) => {
   };
   users[newUser.id] = newUser;
   req.session.userID = newUser.id;
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // GET /login
@@ -151,7 +155,7 @@ app.get('/login', (req, res) => {
   if (req.templateVars.user) {
     return res.redirect('/urls');
   }
-  res.render('urls_login');
+  return res.render('urls_login');
 });
 
 // POST /login (creating a cookie)
@@ -161,13 +165,13 @@ app.get('/login', (req, res) => {
 app.post("/login", (req, res) => {
   const userID = keyByEmail(users,req.body.email);
   if (userID === undefined) {
-    return res.status(403).render('urls_error', { status: 403, msg: "Email and password mismatch" }); // purposefully vague error
+    return errorPage(req, res, 403, "Email and password mismatch"); // purposefully vague error
   }
   if (!bcrypt.compareSync(req.body.password, users[userID].password)) {
-    return res.status(403).render('urls_error', { status: 403, msg: "Email and password mismatch" });
+    return errorPage(req, res, 403, "Email and password mismatch");
   }
   req.session.userID = userID;
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // DELETE /logout (deletes cookie)
@@ -175,7 +179,7 @@ app.post("/login", (req, res) => {
 // do anything if the user is not logged in
 app.delete("/logout", (req, res) => {
   req.session.userID = null;
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // GET /urls/new
@@ -185,14 +189,14 @@ app.get("/urls/new", (req, res) => {
   if (!req.templateVars.user) {
     return res.redirect('/login');
   }
-  res.render("urls_new", req.templateVars);
+  return res.render("urls_new", req.templateVars);
 });
 
 // GET /urls/:shortURL
 // Page for viewing and editing a specific short url. Only accessible by the creator
 // of the short url
 app.get("/urls/:shortURL", URLFromShortURL, (req, res) => {
-  res.render("urls_show", req.templateVars);
+  return res.render("urls_show", req.templateVars);
 });
 
 // PUT /urls/:shortURL
@@ -200,7 +204,7 @@ app.get("/urls/:shortURL", URLFromShortURL, (req, res) => {
 // short url
 app.put("/urls/:shortURL", URLFromShortURL, (req, res) => {
   urlDatabase[req.templateVars.shortURL].longURL = req.body.longURL;
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // DELETE /urls/:shortURL
@@ -208,7 +212,7 @@ app.put("/urls/:shortURL", URLFromShortURL, (req, res) => {
 // short url
 app.delete("/urls/:shortURL", URLFromShortURL, (req, res) => {
   delete urlDatabase[req.templateVars.shortURL];
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // GET /u/:shortURL
@@ -217,16 +221,15 @@ app.delete("/urls/:shortURL", URLFromShortURL, (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const urlData = urlDatabase[req.params.shortURL];
   if (urlData === undefined) {
-    res.status(404).render('urls_error', { status: 404, msg: "ShortURL not found" });
-  } else {
-    urlData.numVisits += 1;
-    if (!req.session[req.params.shortURL]) {
-      urlData.uniqVisits += 1;
-      req.session[req.params.shortURL] = generateRandomString();
-    }
-    urlData.visits.push({visitorID: req.session[req.params.shortURL], date: new Date().toUTCString()});
-    res.redirect(urlData.longURL);
+    return errorPage(req, res, 404, "ShortURL not found");
   }
+  urlData.numVisits += 1;
+  if (!req.session[req.params.shortURL]) {
+    urlData.uniqVisits += 1;
+    req.session[req.params.shortURL] = generateRandomString();
+  }
+  urlData.visits.push({visitorID: req.session[req.params.shortURL], date: new Date().toUTCString()});
+  return res.redirect(urlData.longURL);
 });
 
 // tells the (express) app to listen on port PORT
