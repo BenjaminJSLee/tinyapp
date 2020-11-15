@@ -90,7 +90,7 @@ app.get("/urls", (req, res) => {
   if (!req.templateVars.user) {
     return errorPage(req, res, 401, "Please log in or register an account to see your short URLs");
   }
-  req.templateVars.urls = urlsForUser(urlDatabase,req.templateVars.user ? req.templateVars.user.id : null);
+  req.templateVars.urls = urlsForUser(urlDatabase, req.templateVars.user.id);
   return res.render('urls_index', req.templateVars);
 });
 
