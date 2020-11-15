@@ -61,12 +61,19 @@ app.use((req, res, next) => {
 // Setting ejs (Embedded JavaScript templating) as the template engine
 app.set('view engine','ejs');
 
+//
+
+const setTemplateURLs = (req, res, next) => {
+  req.templateVars.urls = urlsForUser(urlDatabase,req.templateVars.user ? req.templateVars.user.id : null);
+  next();
+};
+
 // Routes
 
 // GET /
 // If logged in, redirects to /urls. Otherwise redirects to /login
 app.get("/", (req, res) => {
-  if (!req.session.userID && !users[req.session.userID]) {
+  if (!req.templateVars.user) {
     return res.redirect('/login');
   }
   res.redirect('/urls');
@@ -75,19 +82,17 @@ app.get("/", (req, res) => {
 // GET /urls
 // The page to obtain the info about the short urls created. If the user is not logged in, a message
 // will be displayed prompting the user to either log in or register an account
-app.get("/urls", (req, res) => {
-  if (!users[req.session.userID]) {
+app.get("/urls", setTemplateURLs, (req, res) => {
+  if (!req.templateVars.user) {
     return res.render('urls_index');
   }
-  const userURLs = urlsForUser(urlDatabase,users[req.session.userID].id);
-  const templateVars = { user: users[req.session.userID], urls: userURLs };
-  res.render('urls_index', templateVars);
+  res.render('urls_index', req.templateVars);
 });
 
 // POST /urls
 // Creates a new short URL. A user can only create a short URL if they are logged in.
 app.post("/urls", (req, res) => {
-  if (!req.session.userID || !users[req.session.userID]) {
+  if (!req.templateVars.user) {
     return res.status(401).send("Error 401: cannot create a shortURL while not logged in");
   }
   const shortURL = generateRandomString();
@@ -106,11 +111,10 @@ app.post("/urls", (req, res) => {
 // The page to register a new user account in the users database. Can only be accessed if
 // the user is not logged in already.
 app.get("/register", (req, res) => {
-  if (req.session.userID && users[req.session.userID]) {
+  if (req.templateVars.user) {
     return res.redirect('/urls');
   }
-  const templateVars = { user: users[req.session.userID] };
-  res.render('urls_register', templateVars);
+  res.render('urls_register', req.templateVars);
 });
 
 // POST /register
@@ -136,7 +140,7 @@ app.post("/register", (req, res) => {
 // GET /login
 // The page to login to an existing account. A logged in user cannot access this page.
 app.get('/login', (req, res) => {
-  if (req.session.userID && users[req.session.userID]) {
+  if (req.templateVars.user) {
     return res.redirect('/urls');
   }
   res.render('urls_login');
@@ -170,11 +174,10 @@ app.delete("/logout", (req, res) => {
 // Page for creating new short urls. Only accessible by logged in users, other users
 // will be redirected
 app.get("/urls/new", (req, res) => {
-  if (!req.session.userID) {
+  if (!req.templateVars.user) {
     return res.redirect('/login');
   }
-  const templateVars = { user: users[req.session.userID] };
-  res.render("urls_new", templateVars);
+  res.render("urls_new", req.templateVars);
 });
 
 // GET /urls/:shortURL
@@ -188,16 +191,12 @@ app.get("/urls/:shortURL", (req, res) => {
       users[req.session.userID].id !== urlDatabase[req.params.shortURL].userID) {
     return res.status(401).send("Error 401: unauthorized access to short URL page");
   }
-  const templateVars = {
-    user: users[req.session.userID],
+  req.templateVars = {
+    ...req.templateVars,
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    date: urlDatabase[req.params.shortURL].dateCreated,
-    numVisits: urlDatabase[req.params.shortURL].numVisits,
-    uniqVisits: urlDatabase[req.params.shortURL].uniqVisits,
-    visits: urlDatabase[req.params.shortURL].visits,
+    ...urlDatabase[req.params.shortURL],
   };
-  res.render("urls_show", templateVars);
+  res.render("urls_show", req.templateVars);
 });
 
 // PUT /urls/:shortURL
