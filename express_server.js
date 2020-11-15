@@ -11,6 +11,7 @@ const { keyByEmail, generateRandomString, urlsForUser } = require('./helpers.js'
 const PORT = 8080; // default port 8080
 
 // Object containing shortURL objects (filled with corresponding longURLs, userIDs, and meta data about the short link)
+// Note that this example object is inaccessible
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -20,18 +21,10 @@ const urlDatabase = {
     uniqVisits: 0,
     visits: [],
   },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "Pk5tKY",
-    dateCreated: new Date().toUTCString(),
-    numVisits: 0,
-    uniqVisits: 0,
-    visits: [],
-  },
 };
 
 // Object containing userID objects (filled with ids, emails, and passwords)
-// Note that this user is inaccessible and is only here as an example
+// Note that this example user is inaccessible
 const users = {
   "Pk5tKY": {
     id: "Pk5tKY",
@@ -232,6 +225,8 @@ app.get("/u/:shortURL", (req, res) => {
   return res.redirect(urlData.longURL);
 });
 
+// Error handling middleware, specifically used for when the user tries to access an
+// unknown page
 app.use((req, res) => {
   return errorPage(req, res, 404, "Page not found");
 });
