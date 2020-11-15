@@ -105,7 +105,7 @@ app.get("/urls", (req, res) => {
 // Creates a new short URL. A user can only create a short URL if they are logged in.
 app.post("/urls", (req, res) => {
   if (!req.templateVars.user) {
-    return errorPage(req, res, 401, "Cannot create a shortURL while not logged in");
+    return errorPage(req, res, 401, "Cannot create a short URL while not logged in");
   }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -134,7 +134,7 @@ app.get("/register", (req, res) => {
 // already exists.
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-    return errorPage(req, res, 400, 'Bad input: Email and password must have values');
+    return errorPage(req, res, 400, 'Email and password must have values');
   }
   if (keyByEmail(users,req.body.email)) { // assumed that no keys can be falsey in this case
     return errorPage(req, res, 400, 'Email is already registered');
@@ -221,7 +221,7 @@ app.delete("/urls/:shortURL", URLFromShortURL, (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const urlData = urlDatabase[req.params.shortURL];
   if (urlData === undefined) {
-    return errorPage(req, res, 404, "ShortURL not found");
+    return errorPage(req, res, 404, "Short URL not found");
   }
   urlData.numVisits += 1;
   if (!req.session[req.params.shortURL]) {
@@ -232,7 +232,11 @@ app.get("/u/:shortURL", (req, res) => {
   return res.redirect(urlData.longURL);
 });
 
+app.use((req, res) => {
+  return errorPage(req, res, 404, "Page not found");
+});
+
 // tells the (express) app to listen on port PORT
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp app listening on port ${PORT}!`);
 });
